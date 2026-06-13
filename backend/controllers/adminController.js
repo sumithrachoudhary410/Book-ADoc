@@ -21,6 +21,22 @@ const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.role === 'doctor') {
+      // Find doctor profile
+      const doctor = await Doctor.findOne({ userId: user._id });
+      if (doctor) {
+        // Delete all appointments associated with this doctor
+        await Appointment.deleteMany({ doctorId: doctor._id });
+        // Delete doctor profile
+        await Doctor.findByIdAndDelete(doctor._id);
+      }
+    } else if (user.role === 'patient') {
+      // Delete all appointments associated with this patient
+      await Appointment.deleteMany({ patientId: user._id });
+    }
+
+    // Delete user
     await User.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
