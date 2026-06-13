@@ -5,6 +5,26 @@ import { getDoctorProfile, updateDoctorProfile } from '../../api/api';
 
 const SPECIALIZATIONS = ['Cardiologist','Dermatologist','Neurologist','Orthopedist','Pediatrician','Psychiatrist','General Physician','Gynecologist','Ophthalmologist','ENT Specialist','Urologist','Oncologist'];
 
+const convertTo24h = (timeStr) => {
+  if (!timeStr) return '';
+  if (!timeStr.includes('AM') && !timeStr.includes('PM')) return timeStr;
+  const [time, modifier] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') hours = '00';
+  if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+};
+
+const convertTo12h = (timeStr) => {
+  if (!timeStr) return '';
+  if (timeStr.includes('AM') || timeStr.includes('PM')) return timeStr;
+  let [hours, minutes] = timeStr.split(':');
+  const modifier = parseInt(hours, 10) >= 12 ? 'PM' : 'AM';
+  hours = parseInt(hours, 10) % 12;
+  hours = hours ? hours : 12;
+  return `${hours.toString().padStart(2, '0')}:${minutes} ${modifier}`;
+};
+
 const DoctorProfileEdit = () => {
   const [form, setForm] = useState({
     firstName:'',lastName:'',email:'',phone:'',address:'',specialization:'',experience:'',feesPerConsultation:'',bio:'',qualifications:'',website:'',timings:['09:00','17:00']
@@ -14,7 +34,16 @@ const DoctorProfileEdit = () => {
 
   useEffect(() => {
     getDoctorProfile().then(({ data }) => {
-      if (data.data) setForm((prev) => ({ ...prev, ...data.data }));
+      if (data.data) {
+        const docData = { ...data.data };
+        if (docData.timings) {
+          docData.timings = [
+            convertTo24h(docData.timings[0]),
+            convertTo24h(docData.timings[1])
+          ];
+        }
+        setForm((prev) => ({ ...prev, ...docData }));
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -30,8 +59,23 @@ const DoctorProfileEdit = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateDoctorProfile(form);
+      const payload = { ...form };
+      if (payload.timings) {
+        payload.timings = [
+          convertTo12h(payload.timings[0]),
+          convertTo12h(payload.timings[1])
+        ];
+      }
+      await updateDoctorProfile(payload);
       toast.success('Profile updated successfully!');
+      // Re-convert timings back to 24h format for input display
+      setForm((prev) => ({
+        ...prev,
+        timings: [
+          convertTo24h(payload.timings[0]),
+          convertTo24h(payload.timings[1])
+        ]
+      }));
     } catch (err) { toast.error(err.response?.data?.message || 'Update failed'); }
     finally { setSaving(false); }
   };
