@@ -4,8 +4,9 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 });
 
-// Attach token to every request if available
+// Attach token and bypass headers to every request if available
 API.interceptors.request.use((config) => {
+  config.headers['Bypass-Tunnel-Reminder'] = 'true';
   const user = JSON.parse(localStorage.getItem('user'));
   if (user && user.token) {
     config.headers.Authorization = `Bearer ${user.token}`;
