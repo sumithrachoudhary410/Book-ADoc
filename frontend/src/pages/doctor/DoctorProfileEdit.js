@@ -5,6 +5,8 @@ import { getDoctorProfile, updateDoctorProfile } from '../../api/api';
 
 const SPECIALIZATIONS = ['Cardiologist','Dermatologist','Neurologist','Orthopedist','Pediatrician','Psychiatrist','General Physician','Gynecologist','Ophthalmologist','ENT Specialist','Urologist','Oncologist'];
 
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 const convertTo24h = (timeStr) => {
   if (!timeStr) return '';
   if (!timeStr.includes('AM') && !timeStr.includes('PM')) return timeStr;
@@ -27,7 +29,8 @@ const convertTo12h = (timeStr) => {
 
 const DoctorProfileEdit = () => {
   const [form, setForm] = useState({
-    firstName:'',lastName:'',email:'',phone:'',address:'',specialization:'',experience:'',feesPerConsultation:'',bio:'',qualifications:'',website:'',timings:['09:00','17:00']
+    firstName:'',lastName:'',email:'',phone:'',address:'',specialization:'',experience:'',feesPerConsultation:'',bio:'',qualifications:'',website:'',timings:['09:00','17:00'],
+    workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,6 +45,9 @@ const DoctorProfileEdit = () => {
             convertTo24h(docData.timings[1])
           ];
         }
+        if (!docData.workingDays || docData.workingDays.length === 0) {
+          docData.workingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        }
         setForm((prev) => ({ ...prev, ...docData }));
       }
     }).catch(() => {}).finally(() => setLoading(false));
@@ -53,6 +59,17 @@ const DoctorProfileEdit = () => {
     const t = [...form.timings];
     t[idx] = val;
     setForm({ ...form, timings: t });
+  };
+
+  const handleDayToggle = (day) => {
+    const currentDays = form.workingDays || [];
+    let updatedDays;
+    if (currentDays.includes(day)) {
+      updatedDays = currentDays.filter((d) => d !== day);
+    } else {
+      updatedDays = [...currentDays, day];
+    }
+    setForm({ ...form, workingDays: updatedDays });
   };
 
   const handleSubmit = async (e) => {
@@ -135,17 +152,53 @@ const DoctorProfileEdit = () => {
             </div>
           </div>
 
-          {/* Timings */}
+          {/* Timings & Working Days */}
           <div className="card-custom" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Consultation Timings</h3>
+            <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Availability Settings</h3>
+            
+            {/* Working Days */}
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label-custom" style={{ marginBottom: '0.75rem' }}>Working Days</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                {DAYS_OF_WEEK.map((day) => {
+                  const isChecked = form.workingDays?.includes(day);
+                  return (
+                    <label key={day} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: isChecked ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${isChecked ? 'var(--accent)' : 'var(--border-light)'}`,
+                      padding: '0.4rem 0.8rem',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      color: isChecked ? 'var(--accent)' : 'var(--text-secondary)',
+                      transition: 'all 0.2s ease-in-out'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleDayToggle(day)}
+                        style={{ display: 'none' }}
+                      />
+                      {day}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Timings */}
+            <label className="form-label-custom">Working Hours</label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
-                <label className="form-label-custom">From</label>
+                <label className="form-label-custom" style={{ fontSize: '0.75rem', opacity: 0.8 }}>From</label>
                 <input type="time" className="form-control-custom" value={form.timings?.[0] || '09:00'} onChange={(e) => handleTiming(0, e.target.value)} />
               </div>
               <div style={{ color: 'var(--text-muted)', paddingTop: '1.5rem' }}>—</div>
               <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
-                <label className="form-label-custom">To</label>
+                <label className="form-label-custom" style={{ fontSize: '0.75rem', opacity: 0.8 }}>To</label>
                 <input type="time" className="form-control-custom" value={form.timings?.[1] || '17:00'} onChange={(e) => handleTiming(1, e.target.value)} />
               </div>
             </div>

@@ -61,6 +61,7 @@ const DoctorProfile = () => {
                   { icon: <FaClock />, label: 'Experience', val: `${doctor.experience} years` },
                   { icon: <FaMapMarkerAlt />, label: 'Location', val: doctor.address },
                   { icon: <FaPhone />, label: 'Phone', val: doctor.phone },
+                  { icon: <FaCalendarCheck />, label: 'Working Days', val: doctor.workingDays && doctor.workingDays.length > 0 ? doctor.workingDays.join(', ') : 'Monday, Tuesday, Wednesday, Thursday, Friday' },
                   { icon: <FaGlobe />, label: 'Timings', val: `${doctor.timings?.[0]} – ${doctor.timings?.[1]}` },
                 ].map((item) => (
                   <div key={item.label} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
@@ -111,13 +112,29 @@ const DoctorProfile = () => {
             <div className="card-custom">
               <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1rem' }}>Availability</h3>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((d) => (
-                  <div key={d} style={{ padding: '0.5rem 0.9rem', background: 'var(--accent-glow)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 600 }}>
-                    {d}
-                  </div>
-                ))}
-                <div style={{ padding: '0.5rem 0.9rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 600 }}>Sat</div>
-                <div style={{ padding: '0.5rem 0.9rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 600 }}>Sun</div>
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                  const isAvailable = doctor.workingDays && doctor.workingDays.length > 0
+                    ? doctor.workingDays.includes(day)
+                    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day);
+                  const shortDay = day.substring(0, 3);
+                  return (
+                    <div
+                      key={day}
+                      style={{
+                        padding: '0.5rem 0.9rem',
+                        background: isAvailable ? 'var(--accent-glow)' : 'rgba(239,68,68,0.06)',
+                        border: `1px solid ${isAvailable ? 'rgba(56,189,248,0.2)' : 'rgba(239,68,68,0.15)'}`,
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.8rem',
+                        color: isAvailable ? 'var(--accent)' : 'var(--text-muted)',
+                        fontWeight: 600,
+                        opacity: isAvailable ? 1 : 0.6
+                      }}
+                    >
+                      {shortDay}
+                    </div>
+                  );
+                })}
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: 0 }}>
                 Consulting hours: {doctor.timings?.[0]} – {doctor.timings?.[1]}

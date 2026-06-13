@@ -14,6 +14,20 @@ const BookAppointment = () => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ date: '', time: '', notes: '' });
 
+  const getDayOfWeekName = (dateStr) => {
+    if (!dateStr) return '';
+    const dateObj = new Date(dateStr);
+    const options = { weekday: 'long' };
+    return dateObj.toLocaleDateString('en-US', options);
+  };
+
+  const selectedDayName = getDayOfWeekName(form.date);
+  const isSelectedDayOff = selectedDayName && doctor
+    ? !(doctor.workingDays && doctor.workingDays.length > 0
+        ? doctor.workingDays.includes(selectedDayName)
+        : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(selectedDayName))
+    : false;
+
   useEffect(() => {
     getDoctorById(doctorId).then(({ data }) => setDoctor(data.data)).catch(() => toast.error('Doctor not found')).finally(() => setLoading(false));
   }, [doctorId]);
@@ -67,6 +81,7 @@ const BookAppointment = () => {
                 {[
                   { label: 'Experience', val: `${doctor.experience} years` },
                   { label: 'Address', val: doctor.address },
+                  { label: 'Working Days', val: doctor.workingDays && doctor.workingDays.length > 0 ? doctor.workingDays.join(', ') : 'Monday, Tuesday, Wednesday, Thursday, Friday' },
                   { label: 'Timings', val: `${doctor.timings?.[0]} – ${doctor.timings?.[1]}` },
                 ].map((r) => (
                   <div key={r.label} style={{ marginBottom: '0.6rem' }}>
@@ -101,6 +116,20 @@ const BookAppointment = () => {
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                 />
+                {isSelectedDayOff && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.4rem 0.75rem',
+                    background: 'rgba(245,158,11,0.08)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--warning)',
+                    fontSize: '0.8rem',
+                    fontWeight: 500
+                  }}>
+                    ⚠️ Note: Dr. {doctor?.firstName} is not usually available on {selectedDayName}s.
+                  </div>
+                )}
               </div>
 
               <div className="form-group">

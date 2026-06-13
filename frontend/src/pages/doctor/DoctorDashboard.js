@@ -12,13 +12,28 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getDoctorAppointments(), getDoctorProfile()])
-      .then(([apptRes, profRes]) => {
+    const loadData = async () => {
+      try {
+        const apptRes = await getDoctorAppointments();
         setAppointments(apptRes.data.data);
+      } catch (err) {
+        toast.error('Failed to load appointments');
+      }
+
+      try {
+        const profRes = await getDoctorProfile();
         setProfile(profRes.data.data);
-      })
-      .catch(() => toast.error('Failed to load data'))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          setProfile(null);
+        } else {
+          toast.error('Failed to load profile');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const stats = {
@@ -41,6 +56,34 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Profile Status */}
+        {!profile && !loading && (
+          <div style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.25rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <FaTimesCircle style={{ color: 'var(--danger)', fontSize: '1.2rem' }} />
+              <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.95rem' }}>
+                Your professional profile is not set up yet!
+              </span>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Patients cannot find you or book appointments with you until you complete your profile details and submit them for admin approval.
+            </p>
+            <div>
+              <Link id="setup-profile-link" to="/doctor/profile" className="btn-primary-custom" style={{ display: 'inline-flex', padding: '0.4rem 1.2rem', fontSize: '0.85rem', textDecoration: 'none' }}>
+                Set Up Profile Now
+              </Link>
+            </div>
+          </div>
+        )}
+
         {profile && profile.status !== 'approved' && (
           <div style={{
             background: profile.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',

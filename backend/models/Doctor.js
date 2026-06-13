@@ -20,6 +20,10 @@ const doctorSchema = new mongoose.Schema(
       type: [String],
       default: ['09:00', '17:00'],
     },
+    workingDays: {
+      type: [String],
+      default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
     bio: { type: String, default: '' },
     qualifications: { type: String, default: '' },
     profilePic: { type: String, default: '' },

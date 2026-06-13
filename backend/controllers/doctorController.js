@@ -89,12 +89,25 @@ const getDoctorProfile = async (req, res) => {
 // @access  Private (doctor)
 const updateDoctorProfile = async (req, res) => {
   try {
-    const doctor = await Doctor.findOneAndUpdate(
-      { userId: req.user._id },
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
-    if (!doctor) return res.status(404).json({ success: false, message: 'Doctor profile not found' });
+    const updateData = { ...req.body };
+    delete updateData.status; // prevent doctor from manually approving themselves
+    delete updateData.userId; // prevent modifying userId reference
+
+    let doctor = await Doctor.findOne({ userId: req.user._id });
+    if (!doctor) {
+      doctor = new Doctor({
+        ...updateData,
+        userId: req.user._id,
+        status: 'pending',
+      });
+      await doctor.save();
+    } else {
+      doctor = await Doctor.findOneAndUpdate(
+        { userId: req.user._id },
+        updateData,
+        { new: true, runValidators: true }
+      );
+    }
     res.json({ success: true, message: 'Profile updated successfully', data: doctor });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

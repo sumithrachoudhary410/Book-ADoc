@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FaSearch, FaStar, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSearch, FaStar, FaClock, FaMapMarkerAlt, FaCalendarAlt } from 'react-icons/fa';
 import { getDoctors, getSpecializations } from '../../api/api';
 
 const DoctorList = () => {
@@ -113,9 +113,10 @@ const DoctorList = () => {
                     </div>
                   </div>
                   <div className="doctor-card-body">
-                    <div className="info-row"><FaClock /> {doc.experience} yrs experience</div>
+                    <div className="info-row"><FaClock /> {doc.experience} yrs experience · {doc.timings?.[0]} – {doc.timings?.[1]}</div>
+                    <div className="info-row"><FaCalendarAlt style={{ color: 'var(--teal)' }} /> {doc.workingDays && doc.workingDays.length > 0 ? doc.workingDays.map(d => d.substring(0, 3)).join(', ') : 'Mon, Tue, Wed, Thu, Fri'}</div>
                     <div className="info-row"><FaMapMarkerAlt /> {doc.address || 'N/A'}</div>
-                    <div className="info-row"><FaStar style={{ color: 'var(--warning)' }} /> {doc.rating?.toFixed(1) || '4.5'} · Available {doc.timings?.[0]} – {doc.timings?.[1]}</div>
+                    <div className="info-row"><FaStar style={{ color: 'var(--warning)' }} /> {doc.rating?.toFixed(1) || '4.5'}</div>
                     {doc.bio && (
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem', lineHeight: 1.5 }}>
                         {doc.bio.substring(0, 80)}{doc.bio.length > 80 ? '...' : ''}
