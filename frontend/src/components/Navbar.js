@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import { getNotifications, markNotificationsRead } from '../api/api';
 import {
   FaHeartbeat, FaUserMd,
   FaSignOutAlt, FaUserCircle, FaBars, FaTimes,
@@ -12,6 +14,36 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const checkNotifications = async () => {
+      try {
+        const { data } = await getNotifications();
+        const unread = data.data.filter((n) => !n.isRead);
+        if (unread.length > 0) {
+          unread.forEach((n) => {
+            toast.info(n.message, {
+              position: "top-right",
+              autoClose: 6000,
+              theme: "dark",
+            });
+          });
+          await markNotificationsRead();
+        }
+      } catch (err) {
+        console.error('Failed to load notifications:', err);
+      }
+    };
+
+    // Check immediately on load/login
+    checkNotifications();
+
+    // Poll every 15 seconds for real-time popups
+    const interval = setInterval(checkNotifications, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
