@@ -17,9 +17,9 @@ services:
   # Frontend Static Site
   - type: web
     name: book-a-doctor-frontend
-    env: static
+    runtime: static
     buildCommand: npm install && npm run build
-    publishDir: build
+    staticPublishPath: ./build
     rootDir: frontend
     envVars:
       - key: REACT_APP_API_URL
