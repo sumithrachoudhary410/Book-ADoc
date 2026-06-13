@@ -2,6 +2,8 @@
 
 A full-stack healthcare booking platform connecting patients, doctors, and administrators. Built with the **MERN stack** (MongoDB, Express.js, React.js, Node.js).
 
+[![Deploy to Render](https://render.com/images/deploy-to-render.svg)](https://render.com/deploy?repo=https://github.com/sumithrachoudhary410/Book-ADoc)
+
 ## Features
 
 - 🔐 **JWT Authentication** with role-based access (Patient, Doctor, Admin)
