@@ -39,6 +39,8 @@ export const uploadDocument = (id, formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
+export const submitFeedback = (id, data) => API.post(`/appointments/${id}/rate`, data);
+
 // Admin
 export const getAdminStats = () => API.get('/admin/stats');
 export const getAllUsers = () => API.get('/admin/users');

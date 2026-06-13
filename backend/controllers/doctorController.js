@@ -1,5 +1,6 @@
 const Doctor = require('../models/Doctor');
 const User = require('../models/User');
+const Appointment = require('../models/Appointment');
 
 // @desc    Get all approved doctors
 // @route   GET /api/doctors
@@ -32,7 +33,14 @@ const getDoctorById = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id).populate('userId', 'name email');
     if (!doctor) return res.status(404).json({ success: false, message: 'Doctor not found' });
-    res.json({ success: true, data: doctor });
+
+    // Fetch reviews/feedbacks for this doctor from completed appointments
+    const reviews = await Appointment.find({
+      doctorId: doctor._id,
+      rating: { $ne: null }
+    }).select('patientName rating feedback createdAt').sort({ createdAt: -1 });
+
+    res.json({ success: true, data: doctor, reviews });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

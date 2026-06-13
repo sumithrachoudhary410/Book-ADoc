@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { FaClock, FaUpload, FaFileAlt, FaUserMd } from 'react-icons/fa';
-import { getPatientAppointments, uploadDocument } from '../../api/api';
+import { FaClock, FaUpload, FaFileAlt, FaUserMd, FaStar } from 'react-icons/fa';
+import { getPatientAppointments, uploadDocument, submitFeedback } from '../../api/api';
 
 const STATUS_COLORS = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', completed: 'badge-completed' };
 const STATUS_DOT = { pending: 'var(--warning)', approved: 'var(--success)', rejected: 'var(--danger)', completed: 'var(--accent)' };
@@ -12,6 +12,35 @@ const MyAppointments = () => {
   const [filter, setFilter] = useState('all');
   const [uploadingId, setUploadingId] = useState(null);
   const fileRef = useRef();
+
+  // Rating Modal States
+  const [showModal, setShowModal] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [feedback, setFeedback] = useState('');
+  const [ratingId, setRatingId] = useState(null);
+  const [submittingRating, setSubmittingRating] = useState(false);
+
+  const openRatingModal = (apptId) => {
+    setRatingId(apptId);
+    setRating(5);
+    setFeedback('');
+    setShowModal(true);
+  };
+
+  const handleRatingSubmit = async (e) => {
+    e.preventDefault();
+    setSubmittingRating(true);
+    try {
+      await submitFeedback(ratingId, { rating, feedback });
+      toast.success('Thank you for your feedback!');
+      setShowModal(false);
+      fetch();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit rating');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
 
   const fetch = async () => {
     try {
@@ -134,6 +163,22 @@ const MyAppointments = () => {
                         <FaFileAlt style={{ color: 'var(--accent)' }} /> {appt.documents.length} doc{appt.documents.length > 1 ? 's' : ''}
                       </span>
                     )}
+
+                    {/* Rate Doctor / Rating Display */}
+                    {appt.status === 'completed' && !appt.isReviewed && (
+                      <button
+                        onClick={() => openRatingModal(appt._id)}
+                        className="btn-primary-custom"
+                        style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem', fontWeight: 600, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer' }}
+                      >
+                        Rate Doctor
+                      </button>
+                    )}
+                    {appt.status === 'completed' && appt.isReviewed && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--warning)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <FaStar style={{ fontSize: '0.8rem' }} /> {appt.rating}/5
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -141,6 +186,85 @@ const MyAppointments = () => {
           </div>
         )}
       </div>
+      
+      {/* Rating Modal */}
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(11,17,32,0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div className="card-custom" style={{ maxWidth: '450px', width: '90%', padding: '1.5rem', border: '1px solid var(--border-light)', boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}>
+            <h3 style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Rate Your Doctor</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>Your feedback helps others choose the right doctor.</p>
+            
+            <form onSubmit={handleRatingSubmit}>
+              {/* Stars selector */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '2rem',
+                      color: star <= rating ? 'var(--warning)' : 'var(--text-muted)',
+                      padding: 0,
+                      transition: 'color 0.2s'
+                    }}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+
+              {/* Feedback Comment */}
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label-custom">Comments / Review</label>
+                <textarea
+                  className="form-control-custom"
+                  rows={3}
+                  placeholder="Tell us about your experience..."
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="btn-outline-custom"
+                  style={{ padding: '0.4rem 1.2rem', fontSize: '0.82rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary-custom"
+                  style={{ padding: '0.4rem 1.2rem', fontSize: '0.82rem' }}
+                  disabled={submittingRating}
+                >
+                  {submittingRating ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

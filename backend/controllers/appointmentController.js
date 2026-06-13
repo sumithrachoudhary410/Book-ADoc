@@ -141,6 +141,59 @@ const getAllAppointments = async (req, res) => {
   }
 };
 
+// @desc    Submit rating and feedback for completed appointment
+// @route   POST /api/appointments/:id/rate
+// @access  Private (patient)
+const submitFeedback = async (req, res) => {
+  try {
+    const { rating, feedback } = req.body;
+    
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Verify ownership
+    if (appointment.patientId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to rate this appointment' });
+    }
+
+    // Verify appointment is completed
+    if (appointment.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Can only rate completed appointments' });
+    }
+
+    // Save feedback to appointment
+    appointment.rating = rating;
+    appointment.feedback = feedback || '';
+    appointment.isReviewed = true;
+    await appointment.save();
+
+    // Re-calculate doctor's rating and totalRatings
+    const doctorAppointments = await Appointment.find({
+      doctorId: appointment.doctorId,
+      rating: { $ne: null }
+    });
+
+    const totalRatings = doctorAppointments.length;
+    const sumRatings = doctorAppointments.reduce((sum, appt) => sum + appt.rating, 0);
+    const averageRating = totalRatings > 0 ? parseFloat((sumRatings / totalRatings).toFixed(1)) : 0;
+
+    await Doctor.findByIdAndUpdate(appointment.doctorId, {
+      rating: averageRating,
+      totalRatings: totalRatings
+    });
+
+    res.json({ success: true, message: 'Feedback submitted successfully', data: appointment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   bookAppointment,
   getPatientAppointments,
@@ -148,4 +201,5 @@ module.exports = {
   updateAppointmentStatus,
   uploadDocument,
   getAllAppointments,
+  submitFeedback,
 };

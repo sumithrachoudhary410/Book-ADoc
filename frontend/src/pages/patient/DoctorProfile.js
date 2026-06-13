@@ -8,11 +8,15 @@ const DoctorProfile = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [doctor, setDoctor] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getDoctorById(id)
-      .then(({ data }) => setDoctor(data.data))
+      .then((res) => {
+        setDoctor(res.data.data);
+        setReviews(res.data.reviews || []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -139,6 +143,38 @@ const DoctorProfile = () => {
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: 0 }}>
                 Consulting hours: {doctor.timings?.[0]} – {doctor.timings?.[1]}
               </p>
+            </div>
+
+            {/* Reviews / Feedback Section */}
+            <div className="card-custom">
+              <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1rem' }}>Patient Reviews</h3>
+              {reviews.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>No reviews yet for this doctor.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {reviews.map((rev, idx) => (
+                    <div key={idx} style={{
+                      borderBottom: idx < reviews.length - 1 ? '1px solid var(--border-light)' : 'none',
+                      paddingBottom: idx < reviews.length - 1 ? '1rem' : 0
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{rev.patientName || 'Anonymous'}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                          {[1,2,3,4,5].map((s) => (
+                            <FaStar key={s} style={{ color: s <= rev.rating ? 'var(--warning)' : 'var(--text-muted)', fontSize: '0.75rem' }} />
+                          ))}
+                        </div>
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.83rem', lineHeight: 1.5, margin: '0.2rem 0' }}>
+                        "{rev.feedback}"
+                      </p>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

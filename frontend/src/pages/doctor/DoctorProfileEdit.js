@@ -27,6 +27,13 @@ const convertTo12h = (timeStr) => {
   return `${hours.toString().padStart(2, '0')}:${minutes} ${modifier}`;
 };
 
+const Field = ({ label, name, type = 'text', placeholder, half, value, onChange }) => (
+  <div className="form-group" style={half ? { flex: '1 1 45%', minWidth: '180px' } : {}}>
+    <label className="form-label-custom">{label}</label>
+    <input type={type} name={name} className="form-control-custom" placeholder={placeholder} value={value || ''} onChange={onChange} />
+  </div>
+);
+
 const DoctorProfileEdit = () => {
   const [form, setForm] = useState({
     firstName:'',lastName:'',email:'',phone:'',address:'',specialization:'',experience:'',feesPerConsultation:'',bio:'',qualifications:'',website:'',timings:['09:00','17:00'],
@@ -99,13 +106,6 @@ const DoctorProfileEdit = () => {
 
   if (loading) return <div className="loading-spinner"><div className="spinner"></div></div>;
 
-  const Field = ({ label, name, type = 'text', placeholder, half }) => (
-    <div className="form-group" style={half ? { flex: '1 1 45%', minWidth: '180px' } : {}}>
-      <label className="form-label-custom">{label}</label>
-      <input type={type} name={name} className="form-control-custom" placeholder={placeholder} value={form[name] || ''} onChange={handleChange} />
-    </div>
-  );
-
   return (
     <div style={{ padding: '2.5rem 0', minHeight: '80vh' }}>
       <div className="container-custom" style={{ maxWidth: '800px' }}>
@@ -119,11 +119,11 @@ const DoctorProfileEdit = () => {
           <div className="card-custom" style={{ marginBottom: '1.25rem' }}>
             <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Personal Information</h3>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Field label="First Name" name="firstName" placeholder="John" half />
-              <Field label="Last Name" name="lastName" placeholder="Doe" half />
-              <Field label="Email" name="email" type="email" placeholder="dr.john@hospital.com" half />
-              <Field label="Phone" name="phone" placeholder="+91 9876543210" half />
-              <Field label="Website (optional)" name="website" placeholder="https://yourwebsite.com" half />
+              <Field label="First Name" name="firstName" placeholder="John" half value={form.firstName} onChange={handleChange} />
+              <Field label="Last Name" name="lastName" placeholder="Doe" half value={form.lastName} onChange={handleChange} />
+              <Field label="Email" name="email" type="email" placeholder="dr.john@hospital.com" half value={form.email} onChange={handleChange} />
+              <Field label="Phone" name="phone" placeholder="+91 9876543210" half value={form.phone} onChange={handleChange} />
+              <Field label="Website (optional)" name="website" placeholder="https://yourwebsite.com" half value={form.website} onChange={handleChange} />
             </div>
           </div>
 
@@ -138,9 +138,9 @@ const DoctorProfileEdit = () => {
                   {SPECIALIZATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <Field label="Years of Experience" name="experience" type="number" placeholder="5" half />
-              <Field label="Consultation Fee (₹)" name="feesPerConsultation" type="number" placeholder="500" half />
-              <Field label="Address / Location" name="address" placeholder="City, State" half />
+              <Field label="Years of Experience" name="experience" type="number" placeholder="5" half value={form.experience} onChange={handleChange} />
+              <Field label="Consultation Fee (₹)" name="feesPerConsultation" type="number" placeholder="500" half value={form.feesPerConsultation} onChange={handleChange} />
+              <Field label="Address / Location" name="address" placeholder="City, State" half value={form.address} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label className="form-label-custom">Qualifications</label>

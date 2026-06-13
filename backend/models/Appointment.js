@@ -22,6 +22,9 @@ const appointmentSchema = new mongoose.Schema(
       default: 'pending',
     },
     notes: { type: String, default: '' },
+    rating: { type: Number, min: 1, max: 5 },
+    feedback: { type: String, default: '' },
+    isReviewed: { type: Boolean, default: false },
     documents: [
       {
         filename: String,
