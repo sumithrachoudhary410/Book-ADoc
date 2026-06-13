@@ -1,0 +1,26 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: book-a-doctor-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # Frontend Static Site
+  - type: web
+    name: book-a-doctor-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    publishDir: build
+    rootDir: frontend
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false
