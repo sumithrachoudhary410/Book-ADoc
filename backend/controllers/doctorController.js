@@ -159,6 +159,20 @@ const updateDoctorProfile = async (req, res) => {
       });
       await doctor.save();
     } else {
+      if (doctor.status === 'rejected') {
+        updateData.status = 'pending';
+        // Notify admin
+        await User.updateMany(
+          { role: 'admin' },
+          {
+            $push: {
+              notifications: {
+                message: `Resubmitted doctor application from ${doctor.firstName} ${doctor.lastName}`,
+              },
+            },
+          }
+        );
+      }
       doctor = await Doctor.findOneAndUpdate(
         { userId: req.user._id },
         updateData,

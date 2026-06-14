@@ -99,8 +99,22 @@ const DoctorDashboard = () => {
               <><FaClock style={{ color: 'var(--warning)' }} />
               <span style={{ color: 'var(--warning)', fontWeight: 600, fontSize: '0.875rem' }}>Your profile is pending admin approval. You'll receive notifications once approved.</span></>
             ) : (
-              <><FaTimesCircle style={{ color: 'var(--danger)' }} />
-              <span style={{ color: 'var(--danger)', fontWeight: 600, fontSize: '0.875rem' }}>Your application was rejected. Please contact support for details.</span></>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <FaTimesCircle style={{ color: 'var(--danger)' }} />
+                  <span style={{ color: 'var(--danger)', fontWeight: 600, fontSize: '0.875rem' }}>
+                    Your application was rejected.
+                  </span>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
+                  You can update your profile details and re-upload your medical certificate to resubmit your application.
+                </p>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <Link to="/doctor/profile" className="btn-primary-custom" style={{ display: 'inline-flex', padding: '0.4rem 1.2rem', fontSize: '0.85rem', textDecoration: 'none' }}>
+                    Update & Resubmit Profile
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
         )}
