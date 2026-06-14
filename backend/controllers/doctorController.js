@@ -131,6 +131,25 @@ const updateDoctorProfile = async (req, res) => {
     delete updateData.status; // prevent doctor from manually approving themselves
     delete updateData.userId; // prevent modifying userId reference
 
+    if (typeof updateData.timings === 'string') {
+      try {
+        updateData.timings = JSON.parse(updateData.timings);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    if (typeof updateData.workingDays === 'string') {
+      try {
+        updateData.workingDays = JSON.parse(updateData.workingDays);
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    if (req.file) {
+      updateData.certificate = req.file.path.replace(/\\/g, '/');
+    }
+
     let doctor = await Doctor.findOne({ userId: req.user._id });
     if (!doctor) {
       doctor = new Doctor({

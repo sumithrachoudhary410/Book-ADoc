@@ -26,7 +26,12 @@ export const getDoctors = (params) => API.get('/doctors', { params });
 export const getDoctorById = (id) => API.get(`/doctors/${id}`);
 export const applyAsDoctor = (formData) => API.post('/doctors/apply', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const getDoctorProfile = () => API.get('/doctors/profile/me');
-export const updateDoctorProfile = (data) => API.put('/doctors/profile/me', data);
+export const updateDoctorProfile = (data) => {
+  if (data instanceof FormData) {
+    return API.put('/doctors/profile/me', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+  }
+  return API.put('/doctors/profile/me', data);
+};
 export const getSpecializations = () => API.get('/doctors/specializations');
 
 // Appointments

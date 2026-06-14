@@ -14,7 +14,7 @@ const upload = require('../middleware/uploadMiddleware');
 router.get('/', getDoctors);
 router.get('/specializations', getSpecializations);
 router.get('/profile/me', protect, getDoctorProfile);
-router.put('/profile/me', protect, updateDoctorProfile);
+router.put('/profile/me', protect, upload.single('certificate'), updateDoctorProfile);
 router.post('/apply', protect, upload.single('certificate'), applyAsDoctor);
 router.get('/:id', getDoctorById);
 

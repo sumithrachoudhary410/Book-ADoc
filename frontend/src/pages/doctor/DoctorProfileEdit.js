@@ -39,6 +39,7 @@ const DoctorProfileEdit = () => {
     firstName:'',lastName:'',email:'',phone:'',address:'',specialization:'',experience:'',feesPerConsultation:'',bio:'',qualifications:'',website:'',timings:['09:00','17:00'],
     workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
   });
+  const [certificateFile, setCertificateFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -90,18 +91,42 @@ const DoctorProfileEdit = () => {
           convertTo12h(payload.timings[1])
         ];
       }
-      await updateDoctorProfile(payload);
+
+      const formData = new FormData();
+      Object.keys(payload).forEach((key) => {
+        if (key === 'timings' || key === 'workingDays') {
+          formData.append(key, JSON.stringify(payload[key]));
+        } else if (payload[key] !== undefined && payload[key] !== null) {
+          formData.append(key, payload[key]);
+        }
+      });
+
+      if (certificateFile) {
+        formData.append('certificate', certificateFile);
+      }
+
+      const { data } = await updateDoctorProfile(formData);
       toast.success('Profile updated successfully!');
-      // Re-convert timings back to 24h format for input display
-      setForm((prev) => ({
-        ...prev,
-        timings: [
-          convertTo24h(payload.timings[0]),
-          convertTo24h(payload.timings[1])
-        ]
-      }));
-    } catch (err) { toast.error(err.response?.data?.message || 'Update failed'); }
-    finally { setSaving(false); }
+      
+      if (data.data) {
+        const docData = { ...data.data };
+        if (docData.timings) {
+          docData.timings = [
+            convertTo24h(docData.timings[0]),
+            convertTo24h(docData.timings[1])
+          ];
+        }
+        if (!docData.workingDays || docData.workingDays.length === 0) {
+          docData.workingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        }
+        setForm((prev) => ({ ...prev, ...docData }));
+      }
+      setCertificateFile(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Update failed');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <div className="loading-spinner"><div className="spinner"></div></div>;
@@ -150,10 +175,10 @@ const DoctorProfileEdit = () => {
               <label className="form-label-custom">Professional Bio</label>
               <textarea name="bio" className="form-control-custom" rows={3} placeholder="Write a short professional bio..." value={form.bio || ''} onChange={handleChange} style={{ resize: 'vertical' }} />
             </div>
-            {form.certificate && (
-              <div className="form-group" style={{ marginTop: '1.25rem' }}>
-                <label className="form-label-custom">Uploaded Medical Certificate (Verification Proof)</label>
-                <div>
+            <div className="form-group" style={{ marginTop: '1.25rem' }}>
+              <label className="form-label-custom">Medical Certificate (Verification Proof)</label>
+              {form.certificate && (
+                <div style={{ marginBottom: '0.75rem' }}>
                   <a
                     href={`${process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000'}/${form.certificate}`}
                     target="_blank"
@@ -174,9 +199,22 @@ const DoctorProfileEdit = () => {
                   >
                     📄 View Uploaded Certificate
                   </a>
+                  <span style={{ marginLeft: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    (Upload a new certificate below to replace the current one)
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setCertificateFile(e.target.files[0])}
+                className="form-control-custom"
+                style={{ padding: '0.5rem' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Supported formats: PDF, JPG, JPEG, PNG. Keep your medical college degree or council certificate updated as verification proof.
+              </p>
+            </div>
           </div>
 
           {/* Timings & Working Days */}
