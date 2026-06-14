@@ -26,8 +26,25 @@ const deleteUser = async (req, res) => {
       // Find doctor profile
       const doctor = await Doctor.findOne({ userId: user._id });
       if (doctor) {
-        // Delete all appointments associated with this doctor
-        await Appointment.deleteMany({ doctorId: doctor._id });
+        // Find and cancel active appointments, and notify patients
+        const activeAppointments = await Appointment.find({
+          doctorId: doctor._id,
+          status: { $in: ['pending', 'approved'] }
+        });
+
+        for (const appt of activeAppointments) {
+          appt.status = 'rejected';
+          await appt.save();
+
+          const patientUser = await User.findById(appt.patientId);
+          if (patientUser) {
+            patientUser.notifications.push({
+              message: `Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appt.date} at ${appt.time} has been cancelled because the doctor has been removed from the platform.`,
+            });
+            await patientUser.save();
+          }
+        }
+
         // Delete doctor profile
         await Doctor.findByIdAndDelete(doctor._id);
       }
@@ -82,6 +99,27 @@ const updateDoctorStatus = async (req, res) => {
 
     doctor.status = status;
     await doctor.save();
+
+    // If the doctor is rejected/removed, cancel active appointments and notify patients
+    if (status !== 'approved') {
+      const activeAppointments = await Appointment.find({
+        doctorId: doctor._id,
+        status: { $in: ['pending', 'approved'] }
+      });
+
+      for (const appt of activeAppointments) {
+        appt.status = 'rejected';
+        await appt.save();
+
+        const patientUser = await User.findById(appt.patientId);
+        if (patientUser) {
+          patientUser.notifications.push({
+            message: `Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appt.date} at ${appt.time} has been cancelled because the doctor is no longer available on the platform.`,
+          });
+          await patientUser.save();
+        }
+      }
+    }
 
     // Notify doctor user
     const doctorUser = await User.findById(doctor.userId);
