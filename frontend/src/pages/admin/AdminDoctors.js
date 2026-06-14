@@ -78,52 +78,82 @@ const AdminDoctors = () => {
                     <th>Experience</th>
                     <th>Fee</th>
                     <th>Address</th>
+                    <th>Certificate</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((doc) => (
-                    <tr key={doc._id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-                          Dr. {doc.firstName} {doc.lastName}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{doc.email}</div>
-                      </td>
-                      <td>{doc.specialization}</td>
-                      <td>{doc.experience} yrs</td>
-                      <td style={{ color: 'var(--success)', fontWeight: 700 }}>₹{doc.feesPerConsultation}</td>
-                      <td style={{ maxWidth: '150px' }}>{doc.address}</td>
-                      <td>
-                        <span className={`badge-custom ${STATUS_COLORS[doc.status]}`}>{doc.status}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          {doc.status !== 'approved' && (
-                            <button
-                              onClick={() => handleStatus(doc._id, 'approved')}
-                              disabled={!!updating}
-                              className="btn-success-custom"
-                              style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  {filtered.map((doc) => {
+                    const backendBaseUrl = process.env.REACT_APP_API_URL
+                      ? process.env.REACT_APP_API_URL.replace('/api', '')
+                      : 'http://localhost:5000';
+                    const certUrl = doc.certificate ? `${backendBaseUrl}/${doc.certificate}` : null;
+
+                    return (
+                      <tr key={doc._id}>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
+                            Dr. {doc.firstName} {doc.lastName}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{doc.email}</div>
+                        </td>
+                        <td>{doc.specialization}</td>
+                        <td>{doc.experience} yrs</td>
+                        <td style={{ color: 'var(--success)', fontWeight: 700 }}>₹{doc.feesPerConsultation}</td>
+                        <td style={{ maxWidth: '150px' }}>{doc.address}</td>
+                        <td>
+                          {certUrl ? (
+                            <a
+                              href={certUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: 'var(--accent)',
+                                textDecoration: 'none',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem'
+                              }}
                             >
-                              <FaCheck style={{ fontSize: '0.65rem' }} /> {updating === doc._id + 'approved' ? '...' : 'Approve'}
-                            </button>
+                              📄 View Certificate
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No File</span>
                           )}
-                          {doc.status !== 'rejected' && (
-                            <button
-                              onClick={() => handleStatus(doc._id, 'rejected')}
-                              disabled={!!updating}
-                              className="btn-danger-custom"
-                              style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                            >
-                              <FaTimes style={{ fontSize: '0.65rem' }} /> {updating === doc._id + 'rejected' ? '...' : 'Reject'}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>
+                          <span className={`badge-custom ${STATUS_COLORS[doc.status]}`}>{doc.status}</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            {doc.status !== 'approved' && (
+                              <button
+                                onClick={() => handleStatus(doc._id, 'approved')}
+                                disabled={!!updating}
+                                className="btn-success-custom"
+                                style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                              >
+                                <FaCheck style={{ fontSize: '0.65rem' }} /> {updating === doc._id + 'approved' ? '...' : 'Approve'}
+                              </button>
+                            )}
+                            {doc.status !== 'rejected' && (
+                              <button
+                                onClick={() => handleStatus(doc._id, 'rejected')}
+                                disabled={!!updating}
+                                className="btn-danger-custom"
+                                style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                              >
+                                <FaTimes style={{ fontSize: '0.65rem' }} /> {updating === doc._id + 'rejected' ? '...' : 'Reject'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

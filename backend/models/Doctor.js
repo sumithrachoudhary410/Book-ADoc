@@ -27,6 +27,7 @@ const doctorSchema = new mongoose.Schema(
     bio: { type: String, default: '' },
     qualifications: { type: String, default: '' },
     profilePic: { type: String, default: '' },
+    certificate: { type: String, default: '' },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

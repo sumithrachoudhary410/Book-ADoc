@@ -56,7 +56,37 @@ const applyAsDoctor = async (req, res) => {
       return res.status(400).json({ success: false, message: 'You have already submitted an application' });
     }
 
-    const doctor = await Doctor.create({ ...req.body, userId: req.user._id });
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please upload your medical certificate from your college' });
+    }
+
+    let timings = req.body.timings;
+    let workingDays = req.body.workingDays;
+
+    if (typeof timings === 'string') {
+      try {
+        timings = JSON.parse(timings);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    if (typeof workingDays === 'string') {
+      try {
+        workingDays = JSON.parse(workingDays);
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    const doctorData = {
+      ...req.body,
+      userId: req.user._id,
+      timings,
+      workingDays,
+      certificate: req.file.path.replace(/\\/g, '/')
+    };
+
+    const doctor = await Doctor.create(doctorData);
 
     // Update user role to doctor
     await User.findByIdAndUpdate(req.user._id, { role: 'doctor' });

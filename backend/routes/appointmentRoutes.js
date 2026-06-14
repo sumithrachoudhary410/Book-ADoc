@@ -8,6 +8,7 @@ const {
   uploadDocument,
   getAllAppointments,
   submitFeedback,
+  getBookedSlots,
 } = require('../controllers/appointmentController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -16,6 +17,7 @@ router.post('/', protect, bookAppointment);
 router.get('/patient', protect, getPatientAppointments);
 router.get('/doctor', protect, getDoctorAppointments);
 router.get('/all', protect, adminOnly, getAllAppointments);
+router.get('/booked-slots', protect, getBookedSlots);
 router.put('/:id/status', protect, updateAppointmentStatus);
 router.post('/:id/upload', protect, upload.single('document'), uploadDocument);
 router.post('/:id/rate', protect, submitFeedback);

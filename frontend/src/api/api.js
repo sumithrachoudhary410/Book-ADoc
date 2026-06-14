@@ -24,13 +24,14 @@ export const markNotificationsRead = () => API.post('/auth/notifications/mark-re
 // Doctors
 export const getDoctors = (params) => API.get('/doctors', { params });
 export const getDoctorById = (id) => API.get(`/doctors/${id}`);
-export const applyAsDoctor = (data) => API.post('/doctors/apply', data);
+export const applyAsDoctor = (formData) => API.post('/doctors/apply', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const getDoctorProfile = () => API.get('/doctors/profile/me');
 export const updateDoctorProfile = (data) => API.put('/doctors/profile/me', data);
 export const getSpecializations = () => API.get('/doctors/specializations');
 
 // Appointments
 export const bookAppointment = (data) => API.post('/appointments', data);
+export const getBookedSlots = (doctorId, date) => API.get('/appointments/booked-slots', { params: { doctorId, date } });
 export const getPatientAppointments = () => API.get('/appointments/patient');
 export const getDoctorAppointments = () => API.get('/appointments/doctor');
 export const updateAppointmentStatus = (id, status) => API.put(`/appointments/${id}/status`, { status });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaCalendarAlt, FaClock, FaArrowLeft } from 'react-icons/fa';
-import { getDoctorById, bookAppointment } from '../../api/api';
+import { getDoctorById, bookAppointment, getBookedSlots } from '../../api/api';
 
 const TIME_SLOTS = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM','04:00 PM','04:30 PM'];
 
@@ -13,6 +13,8 @@ const BookAppointment = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ date: '', time: '', notes: '' });
+  const [bookedSlots, setBookedSlots] = useState({});
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const getDayOfWeekName = (dateStr) => {
     if (!dateStr) return '';
@@ -32,9 +34,36 @@ const BookAppointment = () => {
     getDoctorById(doctorId).then(({ data }) => setDoctor(data.data)).catch(() => toast.error('Doctor not found')).finally(() => setLoading(false));
   }, [doctorId]);
 
+  useEffect(() => {
+    if (form.date && doctorId) {
+      setLoadingSlots(true);
+      getBookedSlots(doctorId, form.date)
+        .then(({ data }) => {
+          setBookedSlots(data.bookedSlots || {});
+        })
+        .catch((err) => {
+          console.error('Failed to load booked slots', err);
+        })
+        .finally(() => {
+          setLoadingSlots(false);
+        });
+    } else {
+      setBookedSlots({});
+    }
+    // Reset time selection when date changes
+    setForm((f) => ({ ...f, time: '' }));
+  }, [form.date, doctorId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.date || !form.time) return toast.error('Please select date and time');
+    
+    // Safety check: is the slot fully booked?
+    const currentBookings = bookedSlots[form.time] || 0;
+    if (currentBookings >= 2) {
+      return toast.error('This time slot is already fully booked.');
+    }
+
     setSubmitting(true);
     try {
       await bookAppointment({ doctorId, date: form.date, time: form.time, notes: form.notes });
@@ -134,30 +163,100 @@ const BookAppointment = () => {
 
               <div className="form-group">
                 <label className="form-label-custom">Select Time Slot *</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                  {TIME_SLOTS.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setForm({ ...form, time: slot })}
-                      style={{
-                        padding: '0.5rem 0.25rem',
-                        border: `1px solid ${form.time === slot ? 'var(--accent)' : 'var(--border-light)'}`,
-                        borderRadius: 'var(--radius-sm)',
-                        background: form.time === slot ? 'var(--accent-glow)' : 'transparent',
-                        color: form.time === slot ? 'var(--accent)' : 'var(--text-muted)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      <FaClock style={{ fontSize: '0.65rem', marginRight: '0.25rem' }} />
-                      {slot}
-                    </button>
-                  ))}
-                </div>
+                {!form.date ? (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    Please select a date first to see available slots.
+                  </div>
+                ) : loadingSlots ? (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div className="spinner" style={{ width: 14, height: 14, borderWidth: '2px' }}></div> Loading slots...
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                    {TIME_SLOTS.map((slot) => {
+                      const bookingsCount = bookedSlots[slot] || 0;
+                      const isFull = bookingsCount >= 2;
+                      const isPartiallyBooked = bookingsCount === 1;
+                      const isSelected = form.time === slot;
+
+                      let border = 'var(--border-light)';
+                      let bg = 'transparent';
+                      let color = 'var(--text-muted)';
+                      let badgeText = '';
+                      let badgeColor = '';
+
+                      if (isFull) {
+                        border = 'rgba(239, 68, 68, 0.2)';
+                        bg = 'rgba(239, 68, 68, 0.03)';
+                        color = 'rgba(255, 255, 255, 0.25)';
+                        badgeText = 'Full';
+                        badgeColor = 'var(--danger)';
+                      } else if (isPartiallyBooked) {
+                        if (isSelected) {
+                          border = 'var(--accent)';
+                          bg = 'var(--accent-glow)';
+                          color = 'var(--accent)';
+                        } else {
+                          border = 'rgba(245, 158, 11, 0.4)';
+                          bg = 'rgba(245, 158, 11, 0.03)';
+                          color = 'var(--text-secondary)';
+                        }
+                        badgeText = '1 left';
+                        badgeColor = 'var(--warning)';
+                      } else {
+                        if (isSelected) {
+                          border = 'var(--accent)';
+                          bg = 'var(--accent-glow)';
+                          color = 'var(--accent)';
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          disabled={isFull}
+                          onClick={() => setForm({ ...form, time: slot })}
+                          style={{
+                            padding: '0.45rem 0.25rem',
+                            border: `1px solid ${border}`,
+                            borderRadius: 'var(--radius-sm)',
+                            background: bg,
+                            color: color,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: isFull ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s',
+                            fontFamily: 'inherit',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.1rem',
+                            position: 'relative'
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <FaClock style={{ fontSize: '0.65rem' }} />
+                            {slot}
+                          </span>
+                          {badgeText && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              color: badgeColor,
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              marginTop: '0.05rem',
+                              letterSpacing: '0.02em'
+                            }}>
+                              {badgeText}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="form-group">

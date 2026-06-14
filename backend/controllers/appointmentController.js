@@ -15,10 +15,28 @@ const bookAppointment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Doctor is not available for appointments' });
     }
 
-    // Check for duplicate booking
-    const existing = await Appointment.findOne({ doctorId, date, time, status: { $ne: 'rejected' } });
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'This time slot is already booked' });
+    // Check if the current patient already has a booking for this doctor, date, and time
+    const patientExisting = await Appointment.findOne({
+      patientId: req.user._id,
+      doctorId,
+      date,
+      time,
+      status: { $ne: 'rejected' }
+    });
+    if (patientExisting) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already booked an appointment with this doctor for this time slot.'
+      });
+    }
+
+    // Check how many total appointments exist for this doctor, date, and time
+    const count = await Appointment.countDocuments({ doctorId, date, time, status: { $ne: 'rejected' } });
+    if (count >= 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'This time slot is already fully booked (maximum 2 patients allowed).'
+      });
     }
 
     const appointment = await Appointment.create({
@@ -194,6 +212,35 @@ const submitFeedback = async (req, res) => {
   }
 };
 
+// @desc    Get booked slots for a doctor on a specific date
+// @route   GET /api/appointments/booked-slots
+// @access  Private
+const getBookedSlots = async (req, res) => {
+  try {
+    const { doctorId, date } = req.query;
+    if (!doctorId || !date) {
+      return res.status(400).json({ success: false, message: 'Doctor ID and Date are required' });
+    }
+
+    // Find all active (non-rejected) appointments for this doctor on this date
+    const appointments = await Appointment.find({
+      doctorId,
+      date,
+      status: { $ne: 'rejected' }
+    });
+
+    // Count bookings per time slot
+    const slotCounts = {};
+    appointments.forEach((app) => {
+      slotCounts[app.time] = (slotCounts[app.time] || 0) + 1;
+    });
+
+    res.json({ success: true, bookedSlots: slotCounts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   bookAppointment,
   getPatientAppointments,
@@ -202,4 +249,5 @@ module.exports = {
   uploadDocument,
   getAllAppointments,
   submitFeedback,
+  getBookedSlots,
 };

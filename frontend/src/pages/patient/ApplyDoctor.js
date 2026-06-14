@@ -28,6 +28,7 @@ const ApplyDoctor = () => {
     website: '', timings: ['09:00', '17:00'],
     workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
   });
+  const [certificateFile, setCertificateFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -55,6 +56,10 @@ const ApplyDoctor = () => {
     for (const f of required) {
       if (!form[f]) return toast.error(`Please fill in ${f}`);
     }
+    if (!certificateFile) {
+      return toast.error('Please upload your medical certificate from your college');
+    }
+
     setLoading(true);
     try {
       const payload = { ...form };
@@ -64,7 +69,18 @@ const ApplyDoctor = () => {
           convertTo12h(payload.timings[1])
         ];
       }
-      await applyAsDoctor(payload);
+
+      const formData = new FormData();
+      Object.keys(payload).forEach((key) => {
+        if (key === 'timings' || key === 'workingDays') {
+          formData.append(key, JSON.stringify(payload[key]));
+        } else {
+          formData.append(key, payload[key]);
+        }
+      });
+      formData.append('certificate', certificateFile);
+
+      await applyAsDoctor(formData);
       toast.success('Application submitted! Pending admin approval.');
       navigate('/doctor/dashboard');
     } catch (err) {
@@ -139,6 +155,17 @@ const ApplyDoctor = () => {
             <div className="form-group">
               <label className="form-label-custom">Professional Bio</label>
               <textarea name="bio" className="form-control-custom" rows={3} placeholder="Tell patients about your expertise and approach..." value={form.bio} onChange={handleChange} style={{ resize: 'vertical' }} />
+            </div>
+            <div className="form-group">
+              <label className="form-label-custom">Medical Certificate from College * (PDF, JPG, PNG)</label>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setCertificateFile(e.target.files[0])}
+                className="form-control-custom"
+                required
+                style={{ padding: '0.5rem' }}
+              />
             </div>
           </div>
 
