@@ -70,6 +70,34 @@ const toggleUserStatus = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     user.isActive = !user.isActive;
     await user.save();
+
+    // If deactivated and user is a doctor, reject/deactivate their doctor profile status
+    if (user.role === 'doctor' && !user.isActive) {
+      const doctor = await Doctor.findOne({ userId: user._id });
+      if (doctor) {
+        doctor.status = 'rejected';
+        await doctor.save();
+
+        const activeAppointments = await Appointment.find({
+          doctorId: doctor._id,
+          status: { $in: ['pending', 'approved'] }
+        });
+
+        for (const appt of activeAppointments) {
+          appt.status = 'rejected';
+          await appt.save();
+
+          const patientUser = await User.findById(appt.patientId);
+          if (patientUser) {
+            patientUser.notifications.push({
+              message: `Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${appt.date} at ${appt.time} has been cancelled because the doctor's account has been deactivated.`,
+            });
+            await patientUser.save();
+          }
+        }
+      }
+    }
+
     res.json({ success: true, message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully` });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
