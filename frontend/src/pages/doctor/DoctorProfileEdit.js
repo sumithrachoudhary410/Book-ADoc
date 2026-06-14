@@ -150,6 +150,33 @@ const DoctorProfileEdit = () => {
               <label className="form-label-custom">Professional Bio</label>
               <textarea name="bio" className="form-control-custom" rows={3} placeholder="Write a short professional bio..." value={form.bio || ''} onChange={handleChange} style={{ resize: 'vertical' }} />
             </div>
+            {form.certificate && (
+              <div className="form-group" style={{ marginTop: '1.25rem' }}>
+                <label className="form-label-custom">Uploaded Medical Certificate (Verification Proof)</label>
+                <div>
+                  <a
+                    href={`${process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000'}/${form.certificate}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: 'var(--accent)',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      background: 'rgba(56, 189, 248, 0.08)',
+                      border: '1px solid rgba(56, 189, 248, 0.2)',
+                      padding: '0.5rem 1rem',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  >
+                    📄 View Uploaded Certificate
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Timings & Working Days */}

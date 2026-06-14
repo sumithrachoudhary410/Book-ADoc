@@ -113,6 +113,37 @@ const DoctorProfile = () => {
               </div>
             )}
 
+            {doctor.certificate && (
+              <div className="card-custom">
+                <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem', fontSize: '1rem' }}>Medical Certificate</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  This doctor has uploaded a medical certificate from their college as proof of verification:
+                </p>
+                <div>
+                  <a
+                    href={`${process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000'}/${doctor.certificate}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: 'rgba(20, 184, 166, 0.08)',
+                      border: '1px solid rgba(20, 184, 166, 0.2)',
+                      padding: '0.5rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--teal-light)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    📄 View Medical Certificate
+                  </a>
+                </div>
+              </div>
+            )}
+
             <div className="card-custom">
               <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1rem' }}>Availability</h3>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
